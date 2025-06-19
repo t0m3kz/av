@@ -52,7 +52,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install uv
-          uv pip install -e ".[dev]"
+          uv venv
+          uv sync 
       
       - name: Run tests
         run: uv run pytest tests --cov=src --cov-report=xml
