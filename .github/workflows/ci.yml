@@ -23,7 +23,7 @@ jobs:
         run: |
           pip install uv
           uv venv
-          uv pip install ruff yamllint
+          uv sync 
       
       - name: Lint & Format
         run: |
