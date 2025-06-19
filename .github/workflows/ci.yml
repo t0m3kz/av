@@ -22,6 +22,7 @@ jobs:
       - name: Install tools
         run: |
           pip install uv
+          uv venv
           uv pip install ruff yamllint
       
       - name: Lint & Format
