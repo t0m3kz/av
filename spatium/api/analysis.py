@@ -12,11 +12,12 @@ router = APIRouter(
 
 sonic_client = SonicClient()
 
+
 @router.post("/config")
 async def analyze_config(request: ConfigAnalysisRequest) -> Dict[str, Any]:
     """
     Analyze network device configuration using Batfish.
-    
+
     This endpoint accepts a device configuration as text and analyzes it using Batfish.
     """
     try:
@@ -25,11 +26,12 @@ async def analyze_config(request: ConfigAnalysisRequest) -> Dict[str, Any]:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
+
 @router.post("/device")
 async def analyze_device_config(credentials: DeviceCredentials) -> Dict[str, Any]:
     """
     Retrieve and analyze configuration from a SONiC device.
-    
+
     This endpoint connects to a SONiC device, retrieves its configuration,
     and then analyzes it using Batfish.
     """
@@ -43,27 +45,24 @@ async def analyze_device_config(credentials: DeviceCredentials) -> Dict[str, Any
             ssh_port=credentials.ssh_port,
             gnmi_port=credentials.gnmi_port,
             private_key=credentials.private_key_path,
-            gnmi_paths=credentials.gnmi_paths
+            gnmi_paths=credentials.gnmi_paths,
         )
-        
+
         # Extract the running config for analysis
         running_config = None
         if "ssh" in config and "running_config" in config["ssh"]:
             running_config = config["ssh"]["running_config"]
-        
+
         if not running_config:
             return {
                 "config": config,
                 "analysis": None,
-                "error": "Could not extract running configuration for analysis"
+                "error": "Could not extract running configuration for analysis",
             }
-            
+
         # Analyze with Batfish
         analysis = analyze_config_with_batfish(running_config)
-        
-        return {
-            "config": config,
-            "analysis": analysis
-        }
+
+        return {"config": config, "analysis": analysis}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")

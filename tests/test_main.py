@@ -18,7 +18,9 @@ def test_home_route(client):
     assert isinstance(data, dict), "Response is not a dictionary"
 
     # Check for name or message
-    assert any(key in data for key in ["name", "message"]), "Response missing 'name' or 'message' field"
+    assert any(key in data for key in ["name", "message"]), (
+        "Response missing 'name' or 'message' field"
+    )
 
     # Check for version or other fields if present
     if "version" in data:

@@ -11,11 +11,12 @@ router = APIRouter(
 
 sonic_client = SonicClient()
 
+
 @router.post("/config")
 async def get_device_config(credentials: DeviceCredentials) -> Dict[str, Any]:
     """
     Retrieve configuration from a SONiC device.
-    
+
     This endpoint connects to a SONiC device using the specified method (SSH, gNMI, or both)
     and retrieves its configuration.
     """
@@ -28,8 +29,10 @@ async def get_device_config(credentials: DeviceCredentials) -> Dict[str, Any]:
             ssh_port=credentials.ssh_port,
             gnmi_port=credentials.gnmi_port,
             private_key=credentials.private_key_path,
-            gnmi_paths=credentials.gnmi_paths
+            gnmi_paths=credentials.gnmi_paths,
         )
         return config
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get device configuration: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get device configuration: {str(e)}"
+        )

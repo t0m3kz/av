@@ -4,14 +4,15 @@ import os
 import sys
 from unittest.mock import patch, MagicMock
 from main import app
+
 # Add the project root to the path so we can import from src
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Mock pybatfish before importing anything that depends on it
-sys.modules['pybatfish'] = MagicMock()
-sys.modules['pybatfish.client'] = MagicMock()
-sys.modules['pybatfish.client.commands'] = MagicMock()
-sys.modules['pybatfish.question'] = MagicMock()
+sys.modules["pybatfish"] = MagicMock()
+sys.modules["pybatfish.client"] = MagicMock()
+sys.modules["pybatfish.client.commands"] = MagicMock()
+sys.modules["pybatfish.question"] = MagicMock()
 
 # Now import the app
 
@@ -22,6 +23,7 @@ def client():
     Test client for the FastAPI application
     """
     return TestClient(app)
+
 
 @pytest.fixture
 def mock_ssh_client():
@@ -34,9 +36,10 @@ def mock_ssh_client():
             "running_config": "interface Ethernet0\n  mtu 9100\n  no shutdown",
             "version_info": "SONiC 4.0.0",
             "interfaces": "Ethernet0 up",
-            "source": "ssh"
+            "source": "ssh",
         }
         yield instance
+
 
 @pytest.fixture
 def mock_gnmi_client():
@@ -47,9 +50,10 @@ def mock_gnmi_client():
         instance = mock.return_value
         instance.get_config.return_value = {
             "gnmi_data": {"path": "openconfig-interfaces:interfaces", "data": {}},
-            "source": "gnmi"
+            "source": "gnmi",
         }
         yield instance
+
 
 @pytest.fixture
 def mock_batfish_analyzer():
@@ -62,9 +66,10 @@ def mock_batfish_analyzer():
             "ip_owners": [{"IP": "192.168.1.1", "Interface": "Ethernet0"}],
             "routes": [],
             "layer3_topology": [],
-            "undefined_references": []
+            "undefined_references": [],
         }
         yield mock
+
 
 @pytest.fixture
 def mock_containerlab_deployer():
@@ -80,22 +85,22 @@ def mock_containerlab_deployer():
                 "nodes": {
                     "sonic1": {"kind": "sonic-vs", "image": "docker-sonic-vs:latest"}
                 },
-                "links": []
-            }
+                "links": [],
+            },
         }
         instance.deploy_topology.return_value = {
             "success": True,
             "topology_name": "test-topo",
             "topology_file": "/tmp/test-topo.yaml",
-            "output": "Deployed topology"
+            "output": "Deployed topology",
         }
         instance.destroy_topology.return_value = {
             "success": True,
             "topology_name": "test-topo",
-            "output": "Destroyed topology"
+            "output": "Destroyed topology",
         }
         instance.list_deployments.return_value = {
             "success": True,
-            "output": "List of deployments"
+            "output": "List of deployments",
         }
         yield instance
