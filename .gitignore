@@ -1,0 +1,27 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+
+# Coverage
+.coverage
+coverage.xml
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Caching
+.pytest_cache/
+.cache/
+site/
+.dev/
