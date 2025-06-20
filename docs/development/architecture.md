@@ -7,17 +7,16 @@ This document describes the architecture of Spatium.
 Spatium follows a modular architecture with clean separation of concerns:
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   API Layer │     │  Business   │     │    Data     │
-│  (FastAPI)  │────►│    Logic    │────►│   Access    │
-└─────────────┘     └─────────────┘     └─────────────┘
-       │                   │                   │
-       │                   │                   │
-       ▼                   ▼                   ▼
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Models    │     │   External  │     │ Configuration│
-│  (Pydantic) │     │   Services  │     │              │
-└─────────────┘     └─────────────┘     └─────────────┘
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   API Layer  │     │  Business    │     │    Data      │
+│  (FastAPI)   │──►  │   Logic      │──►  │   Access     │
+└──────────────┘     └──────────────┘     └──────────────┘
+      │                   │                   │
+      ▼                   ▼                   ▼
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   Models     │     │   External   │     │ Configuration│
+│  (Pydantic)  │     │   Services   │     │              │
+└──────────────┘     └──────────────┘     └──────────────┘
 ```
 
 ## Component Overview
@@ -27,8 +26,8 @@ Spatium follows a modular architecture with clean separation of concerns:
 The API layer is built with FastAPI and handles HTTP requests, input validation, and response formatting.
 
 **Key Components:**
-- API routers (`src/api/`)
-- Request/response models (`src/models/`)
+- API routers (`spatium/api/`)
+- Request/response models (`spatium/models/`)
 - Authentication middleware
 
 ### Business Logic
@@ -36,9 +35,8 @@ The API layer is built with FastAPI and handles HTTP requests, input validation,
 The business logic layer contains the core functionality of the application.
 
 **Key Components:**
-- Device configuration management (`src/device_config/`)
-- Configuration analysis (`src/analysis/`)
-- Digital twin deployment (`src/deployment/`)
+- Device configuration management (`spatium/device_config/`)
+- Digital twin deployment (`spatium/deployment/`)
 
 ### Data Access
 
@@ -47,8 +45,6 @@ The data access layer handles interactions with external data sources.
 **Key Components:**
 - SSH clients
 - gNMI clients
-- Batfish integration
-- ContainerLab integration
 
 ### Models
 
@@ -64,7 +60,6 @@ Pydantic models define the data structures used throughout the application.
 External services used by the application.
 
 **Key Components:**
-- Batfish (for configuration analysis)
 - ContainerLab (for digital twin deployment)
 
 ### Configuration
@@ -124,7 +119,6 @@ External dependencies used by Spatium:
 - **Pydantic**: Data validation and settings management
 - **AsyncSSH**: SSH connections
 - **pyGNMI**: gNMI connections
-- **Batfish**: Network configuration analysis
 - **ContainerLab**: Digital twin deployment
 
 ## Design Principles

@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 import os
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 from main import app
 
 # Add the project root to the path so we can import from src
@@ -30,7 +30,7 @@ def mock_ssh_client():
     """
     Mock for the SSH client
     """
-    with patch("spatium.device_config.ssh_client.SonicSSHClient") as mock:
+    with patch("spatium.device_config.ssh_client.SSHClient") as mock:
         instance = mock.return_value
         instance.get_config.return_value = {
             "running_config": "interface Ethernet0\n  mtu 9100\n  no shutdown",
@@ -104,3 +104,12 @@ def mock_containerlab_deployer():
             "output": "List of deployments",
         }
         yield instance
+
+
+@pytest.fixture(autouse=True, scope="session")
+def patch_asyncssh_connect():
+    import spatium.device_config.ssh_client
+
+    # Patch asyncssh.connect globally for all tests
+    with patch("asyncssh.connect", new_callable=AsyncMock) as mock_connect:
+        yield mock_connect

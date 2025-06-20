@@ -1,11 +1,10 @@
 # Spatium
 
-A FastAPI application for analyzing network device configurations and deploying digital twins, with a focus on SONiC OS.
+A FastAPI application for retrieving network device configurations (SONiC OS) via SSH or gNMI.
 
 ## Features
 
 - Retrieve device configurations via SSH or gNMI
-- Analyze configurations using Batfish
 - Deploy digital twins using ContainerLab
 - REST API for integration with other tools
 
@@ -47,5 +46,4 @@ Documentation will be available at [http://localhost:8000](http://localhost:8000
 See `.env.example` for all available environment variables.
 
 ---
-
-For more details, see the [full documentation](docs/index.md).
+# Removed Batfish/config analysis support. Only SSH/gNMI config retrieval and digital twin deployment remain.

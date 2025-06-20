@@ -1,16 +1,14 @@
 from fastapi import FastAPI
-from spatium.api import device, deployment
+from spatium.api.device import router as device_router
 
 app = FastAPI(
     title="Spatium",
-    description="Network Configuration Analyzer and Digital Twin Platform",
+    description="Network Configuration Analyzer (SSH-only API)",
     version="0.1.0",
 )
 
-# Include routers from API modules
-app.include_router(device.router)
-# app.include_router(analysis.router)
-app.include_router(deployment.router)
+# Only expose the device config API (SSH)
+app.include_router(device_router)
 
 
 @app.get("/")
@@ -18,19 +16,7 @@ async def root():
     return {
         "name": "Spatium",
         "version": "0.1.0",
-        "description": "Network Configuration Analysis and Digital Twin Platform",
-    }
-
-
-@app.get("/about")
-async def about():
-    return {
-        "name": "Spatium",
-        "version": "0.1.0",
-        "description": "Network Configuration Analysis and Digital Twin Platform",
-        "author": "Spatium Team",
-        "repository": "https://github.com/yourusername/spatium",
-        "license": "MIT",
+        "description": "Network Configuration Analysis Platform (SSH-only API)",
     }
 
 

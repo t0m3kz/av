@@ -8,7 +8,6 @@ dependencies = [
     "fastapi>=0.100.0",
     "uvicorn>=0.23.0",
     "httpx>=0.24.1",
-    "pybatfish>=2023.3.27",
     "pydantic>=2.0.0",
     "python-multipart>=0.0.6",
     "asyncssh>=2.13.0", # For SSH connections
@@ -16,6 +15,9 @@ dependencies = [
     "pydantic-settings>=2.0.0", # For settings management
     "pyyaml>=6.0", # For YAML processing (ContainerLab topology)
     "jinja2>=3.1.2", # For templating
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.14",
+    "mkdocstrings>=0.29.1",
 ]
 
 [project.optional-dependencies]
@@ -46,4 +48,3 @@ dev = [
     "pytest-asyncio>=1.0.0",
     "ruff>=0.12.0",
 ]
-# UV-specific settings can go here, but it doesn't support requires-python directly
