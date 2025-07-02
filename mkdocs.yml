@@ -65,3 +65,4 @@ nav:
     - Device Configuration: user-guide/device-config.md
     - Configuration Analysis: user-guide/config-analysis.md
     - Digital Twins: user-guide/digital-twins.md
+  - API Usage: usage.md

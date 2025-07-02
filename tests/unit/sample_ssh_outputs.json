@@ -1,6 +1,0 @@
-{
-  "running_config": "interface Ethernet0\n  mtu 9100\n  no shutdown\n!\ninterface Ethernet1\n  mtu 9100\n  no shutdown\n!\n",
-  "version_info": "SONiC Software Version: SONiC.202205\nDistribution: Debian 11.6\nKernel: 5.10.0-13-2-amd64\nBuild commit: 1234567\nBuild date: Mon May  1 12:00:00 UTC 2023\n",
-  "interfaces": "Ethernet0 up\nEthernet1 down\n",
-  "source": "ssh"
-}

@@ -1,0 +1,342 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+jobs:
+  validate-release:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Validate version format
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+            echo "Invalid version format: $VERSION"
+            echo "Expected format: v1.0.0 or v1.0.0-alpha.1"
+            exit 1
+          fi
+      
+      - name: Check if version exists
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if git tag -l | grep -q "^$VERSION$"; then
+            echo "Version $VERSION already exists"
+            exit 1
+          fi
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          
+          if [ -n "$PREV_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s" $PREV_TAG..HEAD)
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s")
+          fi
+          
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  test-release:
+    name: Test Release Build
+    runs-on: ubuntu-latest
+    needs: validate-release
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install uv
+          uv venv
+          uv sync
+      
+      - name: Run comprehensive tests
+        run: |
+          uv run pytest tests -v --tb=short --cov=spatium --cov-report=xml --cov-report=html
+      
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: matrix.python-version == '3.10'
+        with:
+          name: coverage-reports
+          path: |
+            coverage.xml
+            htmlcov/
+          retention-days: 30
+      
+      - name: Verify imports and basic functionality
+        run: |
+          uv run python -c "
+          import spatium
+          from spatium.main import app
+          from spatium.clients.ssh_client import SSHClient
+          from spatium.clients.rest_client import RestClient
+          from spatium.services.device_config import DeviceConfigService
+          print('All imports successful')
+          "
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: validate-release
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install uv
+          uv venv
+          uv sync
+      
+      - name: Run security checks
+        run: |
+          uv add --dev bandit safety
+          uv run bandit -r spatium/ -f json -o security-report.json || true
+          uv run safety check --json --output safety-report.json || true
+      
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            security-report.json
+            safety-report.json
+          retention-days: 30
+
+  build-package:
+    name: Build Package
+    runs-on: ubuntu-latest
+    needs: [validate-release, test-release, security-scan]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: 'pip'
+      
+      - name: Update version in pyproject.toml
+        run: |
+          VERSION="${{ needs.validate-release.outputs.version }}"
+          # Remove 'v' prefix for Python package version
+          PACKAGE_VERSION=${VERSION#v}
+          sed -i "s/version = \".*\"/version = \"$PACKAGE_VERSION\"/" pyproject.toml
+      
+      - name: Install build dependencies
+        run: |
+          pip install uv build
+          uv venv
+          uv sync
+      
+      - name: Build package
+        run: |
+          python -m build
+      
+      - name: Verify package
+        run: |
+          uv add --dev twine
+          uv run twine check dist/*
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+          retention-days: 30
+
+  build-docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [validate-release, test-release]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ needs.validate-release.outputs.version }}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Test Docker image
+        run: |
+          docker run --rm ghcr.io/${{ github.repository }}:${{ needs.validate-release.outputs.version }} --help
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [validate-release, test-release, security-scan, build-package, build-docker]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+      
+      - name: Download coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-reports
+          path: coverage/
+      
+      - name: Create release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.validate-release.outputs.version }}
+          release_name: Release ${{ needs.validate-release.outputs.version }}
+          body: |
+            ## Changes in ${{ needs.validate-release.outputs.version }}
+            
+            ${{ needs.validate-release.outputs.changelog }}
+            
+            ## Installation
+            
+            ### PyPI Package
+            ```bash
+            pip install spatium==${{ needs.validate-release.outputs.version }}
+            ```
+            
+            ### Docker Image
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}:${{ needs.validate-release.outputs.version }}
+            ```
+            
+            ## Docker Image Details
+            - **Registry**: ghcr.io/${{ github.repository }}
+            - **Tag**: ${{ needs.validate-release.outputs.version }}
+            - **Platforms**: linux/amd64, linux/arm64
+            
+            ## Assets
+            - Python wheel and source distribution
+            - Coverage reports
+            - Security scan results
+          draft: false
+          prerelease: ${{ contains(needs.validate-release.outputs.version, '-') }}
+      
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/
+          asset_name: spatium-${{ needs.validate-release.outputs.version }}.tar.gz
+          asset_content_type: application/gzip
+
+  deploy-docs:
+    name: Deploy Documentation
+    runs-on: ubuntu-latest
+    needs: [validate-release, create-release]
+    if: ${{ !contains(needs.validate-release.outputs.version, '-') }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install uv
+          uv venv
+          uv sync
+      
+      - name: Deploy to GitHub Pages
+        run: |
+          uv run mkdocs gh-deploy --force
+
+  notify-release:
+    name: Notify Release
+    runs-on: ubuntu-latest
+    needs: [validate-release, create-release, deploy-docs]
+    if: always()
+    steps:
+      - name: Notify success
+        if: ${{ needs.create-release.result == 'success' }}
+        run: |
+          echo "✅ Release ${{ needs.validate-release.outputs.version }} created successfully!"
+          echo "🐳 Docker image: ghcr.io/${{ github.repository }}:${{ needs.validate-release.outputs.version }}"
+          echo "📦 Package: https://github.com/${{ github.repository }}/releases/tag/${{ needs.validate-release.outputs.version }}"
+      
+      - name: Notify failure
+        if: ${{ needs.create-release.result == 'failure' }}
+        run: |
+          echo "❌ Release ${{ needs.validate-release.outputs.version }} failed!"
+          exit 1

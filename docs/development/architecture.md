@@ -1,6 +1,18 @@
 # Architecture
 
-This document describes the architecture of Spatium.
+This document descri**Key Components:**
+- Device configuration management (`spatium/services/`)
+- Client implementations (`spatium/clients/`)
+- Digital twin deployment (`spatium/deployment/`)
+
+### Data Access
+
+The data access layer handles interactions with external data sources.
+
+**Key Components:**
+- SSH clients (`spatium/clients/ssh_client.py`)
+- gNMI clients
+- REST API clientshitecture of Spatium.
 
 ## High-Level Architecture
 
@@ -35,7 +47,7 @@ The API layer is built with FastAPI and handles HTTP requests, input validation,
 The business logic layer contains the core functionality of the application.
 
 **Key Components:**
-- Device configuration management (`spatium/device_config/`)
+- Device configuration management (`spatium/clients/`)
 - Digital twin deployment (`spatium/deployment/`)
 
 ### Data Access
@@ -87,7 +99,7 @@ spatium/
 │   │   ├── device.py        # Device models
 │   │   ├── analysis.py      # Analysis models
 │   │   └── deployment.py    # Deployment models
-│   ├── device_config/       # Device configuration management
+│   ├── clients/             # Device configuration clients
 │   │   ├── sonic_client.py  # SONiC client
 │   │   ├── ssh_client.py    # SSH client
 │   │   └── gnmi_client.py   # gNMI client

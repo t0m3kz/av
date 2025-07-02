@@ -10,6 +10,15 @@ class DeviceConfigRequest(BaseModel):
     private_key: Optional[str] = Field(
         None, description="Path to SSH private key file"
     )
+    device_model: Optional[str] = Field(
+        None, description="Device model to select proper config command"
+    )
+    method: Optional[str] = Field(
+        "ssh", description="Config retrieval method: 'ssh' or 'rest'"
+    )
+    rest_url: Optional[str] = Field(
+        None, description="Custom REST API URL for config retrieval (overrides default)"
+    )
 
 
 class DeviceConfigResponse(BaseModel):

@@ -1,0 +1,132 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    # Run weekly on Mondays at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: 'pip'
+      
+      - name: Install uv
+        run: pip install uv
+      
+      - name: Update dependencies
+        run: |
+          echo "::group::Updating dependencies"
+          uv lock --upgrade
+          echo "::endgroup::"
+      
+      - name: Install updated dependencies
+        run: |
+          uv venv
+          uv sync
+      
+      - name: Run tests with updated dependencies
+        run: |
+          echo "::group::Testing with updated dependencies"
+          uv run pytest tests/ --tb=short
+          echo "::endgroup::"
+      
+      - name: Check for security vulnerabilities
+        run: |
+          echo "::group::Security scan"
+          uv add --dev safety
+          uv run safety check || echo "Security issues found"
+          echo "::endgroup::"
+      
+      - name: Generate dependency report
+        run: |
+          echo "::group::Generating dependency report"
+          uv pip list --format=json > dependency-report.json
+          
+          # Create a human-readable summary
+          echo "# Dependency Update Summary" > dependency-summary.md
+          echo "" >> dependency-summary.md
+          echo "## Updated Dependencies" >> dependency-summary.md
+          echo "" >> dependency-summary.md
+          
+          # Check if uv.lock was modified
+          if git diff --name-only | grep -q "uv.lock"; then
+            echo "Dependencies have been updated." >> dependency-summary.md
+            echo "" >> dependency-summary.md
+            echo "### Changes:" >> dependency-summary.md
+            git diff uv.lock | grep -E "^[\+\-]" | head -20 >> dependency-summary.md
+          else
+            echo "No dependency updates available." >> dependency-summary.md
+          fi
+          
+          echo "" >> dependency-summary.md
+          echo "## Security Scan Results" >> dependency-summary.md
+          echo "" >> dependency-summary.md
+          echo "Security scan completed. Check workflow logs for details." >> dependency-summary.md
+          echo "::endgroup::"
+      
+      - name: Create Pull Request
+        if: success()
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update dependencies"
+          title: "🔧 Automated dependency updates"
+          body-path: dependency-summary.md
+          branch: update-dependencies
+          delete-branch: true
+          labels: |
+            dependencies
+            automated
+          assignees: ${{ github.actor }}
+          reviewers: ${{ github.actor }}
+
+  check-outdated:
+    name: Check Outdated Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install uv
+          uv venv
+          uv sync
+      
+      - name: Check for outdated packages
+        run: |
+          echo "::group::Checking for outdated packages"
+          # This would show packages that have updates available
+          uv pip list --outdated || true
+          echo "::endgroup::"
+      
+      - name: Generate security report
+        run: |
+          echo "::group::Security vulnerability check"
+          uv add --dev safety
+          uv run safety check --json > security-report.json || true
+          
+          # Create issue if vulnerabilities found
+          if [ -s security-report.json ]; then
+            echo "Security vulnerabilities found!"
+            cat security-report.json
+          fi
+          echo "::endgroup::"

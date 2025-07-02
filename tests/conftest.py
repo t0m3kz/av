@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 import os
 import sys
 from unittest.mock import patch, MagicMock, AsyncMock
-from main import app
+from spatium.main import app
 
 # Add the project root to the path so we can import from src
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -30,7 +30,7 @@ def mock_ssh_client():
     """
     Mock for the SSH client
     """
-    with patch("spatium.device_config.ssh_client.SSHClient") as mock:
+    with patch("spatium.clients.ssh_client.SSHClient") as mock:
         instance = mock.return_value
         instance.get_config.return_value = {
             "running_config": "interface Ethernet0\n  mtu 9100\n  no shutdown",
@@ -46,7 +46,7 @@ def mock_gnmi_client():
     """
     Mock for the gNMI client
     """
-    with patch("spatium.device_config.gnmi_client.SonicGNMIClient") as mock:
+    with patch("spatium.clients.gnmi_client.SonicGNMIClient") as mock:
         instance = mock.return_value
         instance.get_config.return_value = {
             "gnmi_data": {"path": "openconfig-interfaces:interfaces", "data": {}},
@@ -108,7 +108,6 @@ def mock_containerlab_deployer():
 
 @pytest.fixture(autouse=True, scope="session")
 def patch_asyncssh_connect():
-    import spatium.device_config.ssh_client
 
     # Patch asyncssh.connect globally for all tests
     with patch("asyncssh.connect", new_callable=AsyncMock) as mock_connect:

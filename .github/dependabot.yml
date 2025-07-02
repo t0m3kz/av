@@ -1,14 +1,66 @@
 version: 2
 updates:
-  - package-ecosystem: "uv"
+  # Python dependencies
+  - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "09:00"
     open-pull-requests-limit: 10
     ignore:
+      # Ignore major version updates for pytest to maintain stability
       - dependency-name: "pytest"
         update-types: ["version-update:semver-major"]
+      # Ignore major FastAPI updates until tested
+      - dependency-name: "fastapi"
+        update-types: ["version-update:semver-major"]
+    reviewers:
+      - "@spatium-team"
+    assignees:
+      - "@spatium-team"
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+
+  # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "10:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "@spatium-team"
+    assignees:
+      - "@spatium-team"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "@spatium-team"
+    assignees:
+      - "@spatium-team"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
