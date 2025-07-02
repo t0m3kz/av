@@ -170,20 +170,10 @@ class DeviceConfigService:
                     )
                 )
             else:
-                # If not an exception, it should be a DeviceConfigResult
-                if isinstance(result, DeviceConfigResult):
-                    processed_results.append(result)
-                else:
-                    # Unexpected type, treat as error
-                    logger.error(f"Unexpected result type: {type(result)}")
-                    processed_results.append(
-                        DeviceConfigResult(
-                            host="unknown",
-                            running_config=None,
-                            source="unknown",
-                            error=f"Unexpected result type: {type(result)}",
-                        )
-                    )
+                # If not an exception, it's a DeviceConfigResult
+                if not isinstance(result, DeviceConfigResult):
+                    raise TypeError(f"Expected DeviceConfigResult, got {type(result)}")
+                processed_results.append(result)
 
         return processed_results
 

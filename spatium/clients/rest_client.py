@@ -252,7 +252,7 @@ class RestClient:
                                 "message": "Connection successful",
                             }
                     except Exception as e:
-                        logger.debug(f"Test endpoint {endpoint} failed: {e}")
+                        logger.debug(f"Exception during endpoint test {endpoint}: {e}")
                         continue
 
                 return {
