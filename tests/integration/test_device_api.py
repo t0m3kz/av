@@ -1,26 +1,41 @@
-class TestDeviceAPI:
-    def test_get_device_config(self, client, mock_ssh_client, mock_gnmi_client):
-        # Prepare request data
-        data = {
-            "host": "192.168.1.1",
-            "username": "admin",
-            "password": "password",
-            "method": "both",
-            "ssh_port": 22,
-            "gnmi_port": 8080,
+import json
+import pathlib
+
+# Load all mock outputs once for the class
+MOCKS_DIR = pathlib.Path(__file__).parent.parent / "mocks"
+MOCK_OUTPUTS = {
+    fname: json.load((MOCKS_DIR / fname).open())
+    for fname in ["ssh_output_1.json", "ssh_output_2.json", "ssh_output_error.json"]
+}
+
+
+def get_sample_output(filename):
+    return MOCK_OUTPUTS[filename]
+
+
+class MockSSHClient:
+    def __init__(self, host, username, password=None, private_key=None, port=22):
+        self.host = host
+        self.username = username
+        self.password = password
+        self.private_key = private_key
+        self.port = port
+        self._sample = None
+
+    async def get_config(self, command="show runningconfiguration all"):
+        # Return the sample as a dict with expected fields
+        # Ensure all expected fields are present and not coroutines
+        return {
+            "host": self.host,
+            "running_config": self._sample.get("running_config"),
+            "error": self._sample.get("error"),
         }
 
-        # Make request
-        response = client.post("/device/config", json=data)
 
-        # Check response
-        assert response.status_code == 200
-        response_data = response.json()
+def get_mock_ssh_client_factory(sample):
+    def factory(**kwargs):
+        client = MockSSHClient(**kwargs)
+        client._sample = sample
+        return client
 
-        # Verify SSH data is in response
-        assert "ssh" in response_data
-        assert response_data["ssh"]["source"] == "ssh"
-
-        # Verify gNMI data is in response
-        assert "gnmi" in response_data
-        assert response_data["gnmi"]["source"] == "gnmi"
+    return factory

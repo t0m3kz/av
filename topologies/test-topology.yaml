@@ -1,0 +1,18 @@
+---
+name: test-topology
+prefix: test-topology
+mgmt:
+  network: spatium-mgmt
+  ipv4-subnet: 172.20.0.0/23
+topology:
+  nodes:
+    node1:
+      kind: ceos
+      image: ceos:latest
+    node2:
+      kind: ceos
+      image: ceos:latest
+  links:
+    - endpoints:
+        - node1:eth1
+        - node2:eth1

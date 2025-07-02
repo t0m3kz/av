@@ -4,10 +4,9 @@ This guide explains how to retrieve configurations from network devices using Sp
 
 ## Supported Methods
 
-Spatium supports two methods for retrieving device configurations:
+Spatium supports only SSH for retrieving device configurations.
 
 1. **SSH** - Traditional CLI-based configuration retrieval
-2. **gNMI** - Model-based configuration retrieval using gNMI (gRPC Network Management Interface)
 
 ## SSH Configuration Retrieval
 
@@ -38,48 +37,102 @@ Spatium executes these commands on SONiC devices:
 - `show version` - Get version information
 - `show interfaces status` - Get interface status
 
-## gNMI Configuration Retrieval
+## Device Model Selection
 
-gNMI retrieval uses the gRPC Network Management Interface to retrieve structured data.
+You can specify the `device_model` parameter to tell Spatium which command to use for retrieving the configuration.
+Supported values include: `sonic`, `cisco`, `arista`, `juniper`, `huawei`, `linux`, and more.
 
-### Example Request
-
-```json
-{
-  "host": "192.168.1.1",
-  "username": "admin",
-  "password": "password",
-  "method": "gnmi",
-  "gnmi_port": 8080,
-  "gnmi_paths": [
-    "/openconfig-interfaces:interfaces",
-    "/sonic-device-metadata:sonic-device-metadata"
-  ]
-}
-```
-
-### Default gNMI Paths
-
-If no paths are specified, these default paths are used:
-
-- `/openconfig-interfaces:interfaces`
-- `/sonic-device-metadata:sonic-device-metadata`
-- `/sonic-port:sonic-port`
-
-## Using Both Methods
-
-You can retrieve configurations using both methods simultaneously:
+### Example Request with Device Model
 
 ```json
 {
   "host": "192.168.1.1",
   "username": "admin",
   "password": "password",
-  "method": "both",
-  "ssh_port": 22,
-  "gnmi_port": 8080
+  "device_model": "cisco",
+  "port": 22
 }
 ```
+
+## Example: Retrieving Config from Multiple Devices
+
+You can retrieve the configuration from multiple devices in parallel using the `/device/config` endpoint.
+
+```bash
+curl -X POST "http://localhost:8000/device/config" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {
+      "host": "172.20.0.65",
+      "username": "admin",
+      "password": "password",
+      "method": "ssh",
+      "ssh_port": 22
+    },
+    {
+      "host": "172.20.0.66",
+      "username": "admin",
+      "password": "admin",
+      "method": "ssh",
+      "ssh_port": 22
+    },
+    {
+      "host": "172.20.0.67",
+      "username": "admin",
+      "password": "admin",
+      "method": "ssh",
+      "ssh_port": 22
+    },
+    {
+      "host": "172.20.0.68",
+      "username": "admin",
+      "password": "admin",
+      "method": "ssh",
+      "ssh_port": 22
+    }
+  ]'
+```
+
+### Save the Output to a File
+
+To save the response to a file (e.g., `configs.json`):
+
+```bash
+curl -X POST "http://localhost:8000/device/config" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {
+      "host": "172.20.0.65",
+      "username": "admin",
+      "password": "admin",
+      "method": "ssh",
+      "ssh_port": 22
+    },
+    {
+      "host": "172.20.0.66",
+      "username": "admin",
+      "password": "admin",
+      "method": "ssh",
+      "ssh_port": 22
+    },
+    {
+      "host": "172.20.0.67",
+      "username": "admin",
+      "password": "admin",
+      "method": "ssh",
+      "ssh_port": 22
+    },
+    {
+      "host": "172.20.0.68",
+      "username": "admin",
+      "password": "admin",
+      "method": "ssh",
+      "ssh_port": 22
+    }
+  ]' -o configs.json
+```
+
+The response will be saved in `configs.json`.
 
 ## Error Handling
 
@@ -87,16 +140,13 @@ If a connection fails, the response will include an error message:
 
 ```json
 {
-  "ssh": {
-    "error": "Connection failed: Connection refused",
-    "source": "ssh"
-  }
+  "host": "172.20.0.65",
+  "error": "Failed to get device configuration: Connection refused"
 }
 ```
 
 ## Best Practices
 
 - Use SSH for text-based configurations and quick checks
-- Use gNMI for structured data and programmatic configuration management
 - Store credentials securely and consider using environment variables
 - Use key-based authentication when possible

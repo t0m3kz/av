@@ -1,38 +1,22 @@
-from fastapi import APIRouter, HTTPException
-from spatium.models.device import DeviceCredentials
-from spatium.device_config.sonic_client import SonicClient
-from typing import Dict, Any
+# SPDX-License-Identifier: Apache-2.0
+"""Main device API router that combines inventory and configuration management.
 
-router = APIRouter(
-    prefix="/device",
-    tags=["device"],
-    responses={404: {"description": "Not found"}},
-)
+Follows FastAPI best practices with clean separation of concerns.
+"""
 
-sonic_client = SonicClient()
+from fastapi import APIRouter
 
+from spatium.api import containerlab_inventory, deployment
+from spatium.api.routers.device_config import router as config_router
+from spatium.api.routers.inventory import router as inventory_router
 
-@router.post("/config")
-async def get_device_config(credentials: DeviceCredentials) -> Dict[str, Any]:
-    """
-    Retrieve configuration from a SONiC device.
+# Main device router that combines all device-related endpoints
+router = APIRouter()
 
-    This endpoint connects to a SONiC device using the specified method (SSH, gNMI, or both)
-    and retrieves its configuration.
-    """
-    try:
-        config = await sonic_client.get_config(
-            host=credentials.host,
-            username=credentials.username,
-            password=credentials.password,
-            method=credentials.method,
-            ssh_port=credentials.ssh_port,
-            gnmi_port=credentials.gnmi_port,
-            private_key=credentials.private_key_path,
-            gnmi_paths=credentials.gnmi_paths,
-        )
-        return config
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get device configuration: {str(e)}"
-        )
+# Include sub-routers
+router.include_router(inventory_router, prefix="/topology")
+router.include_router(config_router)
+
+# --- Import other routers at the end to avoid circular import ---
+router.include_router(containerlab_inventory.router)
+router.include_router(deployment.router)

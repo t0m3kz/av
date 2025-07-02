@@ -1,12 +1,14 @@
-import pytest
-from fastapi.testclient import TestClient
-import os
+import pathlib
 import sys
-from unittest.mock import patch, MagicMock
-from main import app
+from unittest.mock import AsyncMock, MagicMock, patch
+
+from fastapi.testclient import TestClient
+import pytest
+
+from spatium.main import app
 
 # Add the project root to the path so we can import from src
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.resolve()))
 
 # Mock pybatfish before importing anything that depends on it
 sys.modules["pybatfish"] = MagicMock()
@@ -30,7 +32,7 @@ def mock_ssh_client():
     """
     Mock for the SSH client
     """
-    with patch("spatium.device_config.ssh_client.SonicSSHClient") as mock:
+    with patch("spatium.clients.ssh_client.SSHClient") as mock:
         instance = mock.return_value
         instance.get_config.return_value = {
             "running_config": "interface Ethernet0\n  mtu 9100\n  no shutdown",
@@ -46,7 +48,7 @@ def mock_gnmi_client():
     """
     Mock for the gNMI client
     """
-    with patch("spatium.device_config.gnmi_client.SonicGNMIClient") as mock:
+    with patch("spatium.clients.gnmi_client.SonicGNMIClient") as mock:
         instance = mock.return_value
         instance.get_config.return_value = {
             "gnmi_data": {"path": "openconfig-interfaces:interfaces", "data": {}},
@@ -82,9 +84,7 @@ def mock_containerlab_deployer():
             "name": "test-topo",
             "prefix": "spatium-test-topo",
             "topology": {
-                "nodes": {
-                    "sonic1": {"kind": "sonic-vs", "image": "docker-sonic-vs:latest"}
-                },
+                "nodes": {"sonic1": {"kind": "sonic-vs", "image": "docker-sonic-vs:latest"}},
                 "links": [],
             },
         }
@@ -104,3 +104,10 @@ def mock_containerlab_deployer():
             "output": "List of deployments",
         }
         yield instance
+
+
+@pytest.fixture(autouse=True, scope="session")
+def patch_asyncssh_connect():
+    # Patch asyncssh.connect globally for all tests
+    with patch("asyncssh.connect", new_callable=AsyncMock) as mock_connect:
+        yield mock_connect

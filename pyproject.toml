@@ -8,7 +8,6 @@ dependencies = [
     "fastapi>=0.100.0",
     "uvicorn>=0.23.0",
     "httpx>=0.24.1",
-    "pybatfish>=2023.3.27",
     "pydantic>=2.0.0",
     "python-multipart>=0.0.6",
     "asyncssh>=2.13.0", # For SSH connections
@@ -16,19 +15,31 @@ dependencies = [
     "pydantic-settings>=2.0.0", # For settings management
     "pyyaml>=6.0", # For YAML processing (ContainerLab topology)
     "jinja2>=3.1.2", # For templating
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.14",
+    "mkdocstrings>=0.29.1",
+    "types-requests>=2.32.4.20250611",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.3.1",
-    "pytest-asyncio>=0.21.1",
-    "black>=23.3.0",
-    "isort>=5.12.0",
-    "flake8>=6.0.0",
-    "mypy>=1.3.0",
-    "httpx>=0.24.1",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.3.1",
+    "pytest-timeout>=2.1.0",
+    "pytest-benchmark>=4.0.0",
+    "ruff>=0.12.0",
+    "mypy>=1.7.0",
+    "types-PyYAML>=6.0.12",
+    "bandit>=1.7.5",
+    "safety>=2.3.0",
+    "pre-commit>=3.5.0",
     "mkdocs>=1.5.0",
-    "mkdocs-material>=9.4.0"
+    "mkdocs-material>=9.4.0",
+    "httpx>=0.24.1",
+    "twine>=4.0.0",
+    "build>=1.0.0"
 ]
 
 [build-system]
@@ -36,7 +47,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["."]
+packages = ["spatium"]
 
 [tool.uv]
 
@@ -44,6 +55,171 @@ packages = ["."]
 dev = [
     "pytest>=8.4.1",
     "pytest-asyncio>=1.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.3.1",
+    "pytest-timeout>=2.1.0",
     "ruff>=0.12.0",
+    "mypy>=1.7.0",
+    "types-PyYAML>=6.0.12",
+    "bandit>=1.7.5",
+    "safety>=2.3.0",
+    "yamllint>=1.37.1",
 ]
-# UV-specific settings can go here, but it doesn't support requires-python directly
+
+# pytest configuration
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=spatium",
+    "--cov-branch",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml",
+    "--cov-fail-under=70",
+    "--tb=short",
+    "--timeout=60"
+]
+testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "asyncio: marks tests as async tests",
+    "ssh: marks tests that require SSH connectivity",
+    "containerlab: marks tests that require ContainerLab",
+    "network: marks tests that require network access"
+]
+asyncio_mode = "auto"
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning"
+]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["spatium"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/.venv/*",
+    "*/env/*",
+    "*/.env/*"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod"
+]
+show_missing = true
+skip_covered = false
+precision = 2
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "asyncssh.*",
+    "pygnmi.*",
+    "pybatfish.*",
+    "containerlab.*"
+]
+ignore_missing_imports = true
+
+# Ruff configuration
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "C90", # mccabe
+    "N",   # pep8-naming
+    "D",   # pydocstyle
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "A",   # flake8-builtins
+    "C4",  # flake8-comprehensions
+    "PT",  # flake8-pytest-style
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "ARG", # flake8-unused-arguments
+    "PTH", # flake8-use-pathlib
+    "TD",  # flake8-todos
+    "FIX", # flake8-fixme
+]
+ignore = [
+    "D100", # Missing docstring in public module
+    "D104", # Missing docstring in public package
+    "D213", # Multi-line docstring summary should start at the second line
+    "TD002", # Missing author in TODO
+    "TD003", # Missing issue link on the line following this TODO
+    "FIX002", # Line contains TODO, consider resolving the issue
+    "B008", # Do not perform function call in argument defaults (FastAPI dependency injection)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+    "D", # Don't require docstrings in tests
+    "ARG", # Allow unused arguments in tests
+    "PT009", # Use regular assert instead of unittest-style
+    "PT027", # Use pytest.raises instead of unittest assertRaises
+]
+"spatium/main.py" = [
+    "D100", # Missing docstring in public module (FastAPI app)
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.isort]
+known-first-party = ["spatium"]
+force-sort-within-sections = true
+
+# Bandit security configuration
+[tool.bandit]
+exclude_dirs = ["tests", "venv", ".venv", "env", ".env"]
+skips = ["B101", "B601"]  # Skip assert_used and shell_injection_subprocess

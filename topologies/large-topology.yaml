@@ -1,0 +1,66 @@
+---
+name: large-topology
+prefix: large-topology
+mgmt:
+  network: spatium-mgmt
+  ipv4-subnet: 172.20.0.0/23
+topology:
+  nodes:
+    node0:
+      kind: ceos
+      image: ceos:latest
+    node1:
+      kind: ceos
+      image: ceos:latest
+    node2:
+      kind: ceos
+      image: ceos:latest
+    node3:
+      kind: ceos
+      image: ceos:latest
+    node4:
+      kind: ceos
+      image: ceos:latest
+    node5:
+      kind: ceos
+      image: ceos:latest
+    node6:
+      kind: ceos
+      image: ceos:latest
+    node7:
+      kind: ceos
+      image: ceos:latest
+    node8:
+      kind: ceos
+      image: ceos:latest
+    node9:
+      kind: ceos
+      image: ceos:latest
+  links:
+    - endpoints:
+        - node0:eth1
+        - node1:eth1
+    - endpoints:
+        - node1:eth1
+        - node2:eth1
+    - endpoints:
+        - node2:eth1
+        - node3:eth1
+    - endpoints:
+        - node3:eth1
+        - node4:eth1
+    - endpoints:
+        - node4:eth1
+        - node5:eth1
+    - endpoints:
+        - node5:eth1
+        - node6:eth1
+    - endpoints:
+        - node6:eth1
+        - node7:eth1
+    - endpoints:
+        - node7:eth1
+        - node8:eth1
+    - endpoints:
+        - node8:eth1
+        - node9:eth1
