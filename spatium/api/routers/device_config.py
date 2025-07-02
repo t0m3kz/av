@@ -150,7 +150,7 @@ async def get_single_device_config(
 
 
 @router.post("/test-connectivity")
-async def test_device_connectivity(
+async def chek_device_connectivity(
     devices: list[DeviceConfigRequest],
     config_service: DeviceConfigService = Depends(get_device_config_service),
 ) -> dict[str, Any]:
