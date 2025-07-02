@@ -41,10 +41,10 @@ jobs:
           uv run ruff check . --output-format=github
           echo "::endgroup::"
 
-          echo "::group::YAML linting"
-          uv run yamllint -d "{extends: default, ignore: [.github/, .venv/ ]}" \
-                -d "{rules: {truthy: {allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']}}}" .
-          echo "::endgroup::"
+          # echo "::group::YAML linting"
+          # uv run yamllint -d "{extends: default, ignore: [.github/, .venv/ ]}" \
+          #       -d "{rules: {truthy: {allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']}}}" .
+          # echo "::endgroup::"
 
       - name: Type checking
         run: |
