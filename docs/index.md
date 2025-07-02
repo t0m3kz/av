@@ -79,38 +79,38 @@ graph TB
         CI[CI/CD Pipeline]
         NMS[Network Management]
     end
-    
+
     subgraph "Spatium Core"
         API[FastAPI Server]
         INV[Inventory Service]
         CFG[Config Service]
         DEP[Deployment Service]
     end
-    
+
     subgraph "Network Infrastructure"
         DEV1[SONiC Device 1]
         DEV2[SONiC Device 2]
         DEV3[SONiC Device N]
     end
-    
+
     subgraph "Analysis & Testing"
         BF[Batfish Engine]
         CL[ContainerLab]
         DT[Digital Twins]
     end
-    
+
     CLI --> API
     CI --> API
     NMS --> API
-    
+
     API --> INV
     API --> CFG
     API --> DEP
-    
+
     CFG -.-> DEV1
     CFG -.-> DEV2
     CFG -.-> DEV3
-    
+
     DEP --> CL
     CL --> DT
     CFG --> BF

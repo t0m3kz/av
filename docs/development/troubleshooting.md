@@ -387,7 +387,7 @@ gh workflow list --json | jq '.[] | {name: .name, state: .state}'
    ```bash
    # Disable failing workflow
    gh workflow disable <workflow-name>
-   
+
    # Create hotfix branch
    git checkout -b hotfix/pipeline-fix
    ```
@@ -403,7 +403,7 @@ gh workflow list --json | jq '.[] | {name: .name, state: .state}'
    ```bash
    # Skip problematic step temporarily
    if: false  # Add to problematic step
-   
+
    # Or reduce test scope
    uv run pytest tests/unit/  # Skip integration tests
    ```
@@ -412,7 +412,7 @@ gh workflow list --json | jq '.[] | {name: .name, state: .state}'
    ```bash
    # Re-enable workflow
    gh workflow enable <workflow-name>
-   
+
    # Test fix
    git push origin hotfix/pipeline-fix
    ```
@@ -423,7 +423,7 @@ gh workflow list --json | jq '.[] | {name: .name, state: .state}'
    ```bash
    # Disable all workflows
    gh workflow disable-all
-   
+
    # Revoke tokens if compromised
    # Go to Settings > Secrets and variables > Actions
    ```
@@ -432,7 +432,7 @@ gh workflow list --json | jq '.[] | {name: .name, state: .state}'
    ```bash
    # Check workflow logs for suspicious activity
    gh run list --limit 50 | grep -E "(failed|cancelled)"
-   
+
    # Review recent commits
    git log --oneline -10
    ```

@@ -1,8 +1,11 @@
 from functools import lru_cache
+
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    """Application settings for Spatium."""
+
     # Application settings
     APP_NAME: str = "Spatium"
     APP_VERSION: str = "0.1.0"
@@ -17,7 +20,7 @@ class Settings(BaseSettings):
     # ContainerLab settings
     CONTAINERLAB_API_URL: str = "http://localhost:8081"
     CONTAINERLAB_TIMEOUT: int = 30
-    
+
     # REST client settings
     REST_CLIENT_TIMEOUT: int = 30
     REST_CLIENT_RETRIES: int = 3
@@ -27,7 +30,7 @@ class Settings(BaseSettings):
     model_config = {"env_file": ".env", "case_sensitive": True}
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     """Get cached settings instance."""
     return Settings()

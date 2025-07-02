@@ -1,16 +1,17 @@
-"""
-Deployment API endpoints for network topology management.
+"""Deployment API endpoints for network topology management.
+
 Provides endpoints for deploying, destroying, and listing network topologies.
 """
+
 import logging
-from typing import Dict, Any
+from typing import Any
 
 from fastapi import APIRouter, Depends
 
-from spatium.api.exceptions import create_http_exception, DeploymentError
-from spatium.models.deployment import TopologyConfig, DeploymentResponse
-from spatium.services.deployment import ContainerLabDeploymentService
 from spatium.api.dependencies import get_deployment_service
+from spatium.api.exceptions import DeploymentError, create_http_exception
+from spatium.models.deployment import DeploymentResponse, TopologyConfig
+from spatium.services.deployment import ContainerLabDeploymentService
 
 logger = logging.getLogger(__name__)
 
@@ -24,15 +25,14 @@ router = APIRouter(
 @router.post("/deploy", response_model=DeploymentResponse)
 async def deploy_topology(
     config: TopologyConfig,
-    deployment_service: ContainerLabDeploymentService = Depends(get_deployment_service)
+    deployment_service: ContainerLabDeploymentService = Depends(get_deployment_service),
 ) -> DeploymentResponse:
-    """
-    Deploy a network topology using ContainerLab.
-    
+    """Deploy a network topology using ContainerLab.
+
     Args:
         config: Topology configuration including nodes and links
         deployment_service: Injected deployment service
-        
+
     Returns:
         DeploymentResponse: Result of the deployment operation
     """
@@ -42,25 +42,24 @@ async def deploy_topology(
         return result
     except DeploymentError as e:
         logger.error(f"Deployment error: {e}")
-        raise create_http_exception(500, f"Deployment failed: {e}")
+        raise create_http_exception(500, f"Deployment failed: {e}") from e
     except Exception as e:
         error_msg = f"Unexpected error during deployment: {e}"
         logger.error(error_msg)
-        raise create_http_exception(500, error_msg)
+        raise create_http_exception(500, error_msg) from e
 
 
 @router.delete("/destroy/{topology_name}", response_model=DeploymentResponse)
 async def destroy_topology(
     topology_name: str,
-    deployment_service: ContainerLabDeploymentService = Depends(get_deployment_service)
+    deployment_service: ContainerLabDeploymentService = Depends(get_deployment_service),
 ) -> DeploymentResponse:
-    """
-    Destroy a deployed topology.
-    
+    """Destroy a deployed topology.
+
     Args:
         topology_name: Name of the topology to destroy
         deployment_service: Injected deployment service
-        
+
     Returns:
         DeploymentResponse: Result of the destroy operation
     """
@@ -70,23 +69,22 @@ async def destroy_topology(
         return result
     except DeploymentError as e:
         logger.error(f"Destroy error: {e}")
-        raise create_http_exception(500, f"Failed to destroy topology: {e}")
+        raise create_http_exception(500, f"Failed to destroy topology: {e}") from e
     except Exception as e:
         error_msg = f"Unexpected error during destroy: {e}"
         logger.error(error_msg)
-        raise create_http_exception(500, error_msg)
+        raise create_http_exception(500, error_msg) from e
 
 
 @router.get("/list")
 async def list_deployments(
-    deployment_service: ContainerLabDeploymentService = Depends(get_deployment_service)
-) -> Dict[str, Any]:
-    """
-    List all deployed topologies.
-    
+    deployment_service: ContainerLabDeploymentService = Depends(get_deployment_service),
+) -> dict[str, Any]:
+    """List all deployed topologies.
+
     Args:
         deployment_service: Injected deployment service
-        
+
     Returns:
         Dict containing list of deployed topologies and their status
     """
@@ -97,4 +95,4 @@ async def list_deployments(
     except Exception as e:
         error_msg = f"Failed to list deployments: {e}"
         logger.error(error_msg)
-        raise create_http_exception(500, error_msg)
+        raise create_http_exception(500, error_msg) from e

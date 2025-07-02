@@ -1,7 +1,9 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+
+from spatium.models.deployment import LinkConfig, NodeConfig, TopologyConfig
 from spatium.services.deployment import ContainerLabDeploymentService
-from spatium.models.deployment import TopologyConfig, NodeConfig, LinkConfig
 
 
 class TestContainerLabDeployer:
@@ -12,16 +14,10 @@ class TestContainerLabDeployer:
             NodeConfig(name="sonic1", type="sonic-vs", image="sonic:latest"),
             NodeConfig(name="sonic2", type="sonic-vs", image="sonic:latest"),
         ]
-        links = [
-            LinkConfig(node1="sonic1", interface1="eth1", node2="sonic2", interface2="eth1")
-        ]
+        links = [LinkConfig(node1="sonic1", interface1="eth1", node2="sonic2", interface2="eth1")]
 
         # Create topology config
-        topology_config = TopologyConfig(
-            name="test-topo",
-            nodes=nodes,
-            links=links
-        )
+        topology_config = TopologyConfig(name="test-topo", nodes=nodes, links=links)
 
         # Check topology config structure
         assert topology_config.name == "test-topo"
@@ -36,7 +32,9 @@ class TestContainerLabDeployer:
         """Test successful topology deployment."""
         # Create deployer with mocked subprocess
         with (
-            patch("spatium.services.deployment.asyncio.create_subprocess_exec", new=AsyncMock()) as mock_subprocess,
+            patch(
+                "spatium.services.deployment.asyncio.create_subprocess_exec", new=AsyncMock()
+            ) as mock_subprocess,
             patch("spatium.services.deployment.yaml.dump") as mock_yaml_dump,
             patch("builtins.open", MagicMock()),
             patch("spatium.services.deployment.shutil.which", return_value="/usr/bin/containerlab"),
@@ -49,14 +47,14 @@ class TestContainerLabDeployer:
 
             # Create deployer and deploy topology
             deployer = ContainerLabDeploymentService()
-            
+
             # Create a valid topology config
             topology_config = TopologyConfig(
                 name="test-topo",
                 nodes=[NodeConfig(name="sonic1", type="sonic-vs", image="sonic:latest")],
-                links=[]
+                links=[],
             )
-            
+
             result = await deployer.deploy_topology(topology_config)
 
             # Check yaml was dumped
@@ -79,7 +77,9 @@ class TestContainerLabDeployer:
         """Test failed topology deployment."""
         # Create deployer with mocked subprocess
         with (
-            patch("spatium.services.deployment.asyncio.create_subprocess_exec", new=AsyncMock()) as mock_subprocess,
+            patch(
+                "spatium.services.deployment.asyncio.create_subprocess_exec", new=AsyncMock()
+            ) as mock_subprocess,
             patch("spatium.services.deployment.yaml.dump"),
             patch("builtins.open", MagicMock()),
             patch("spatium.services.deployment.shutil.which", return_value="/usr/bin/containerlab"),
@@ -92,14 +92,14 @@ class TestContainerLabDeployer:
 
             # Create deployer and deploy topology
             deployer = ContainerLabDeploymentService()
-            
+
             # Create a valid topology config
             topology_config = TopologyConfig(
                 name="test-topo",
                 nodes=[NodeConfig(name="sonic1", type="sonic-vs", image="sonic:latest")],
-                links=[]
+                links=[],
             )
-            
+
             result = await deployer.deploy_topology(topology_config)
 
             # Check result indicates failure
@@ -111,7 +111,9 @@ class TestContainerLabDeployer:
         """Test topology destruction."""
         # Create deployer with mocked subprocess
         with (
-            patch("spatium.services.deployment.asyncio.create_subprocess_exec", new=AsyncMock()) as mock_subprocess,
+            patch(
+                "spatium.services.deployment.asyncio.create_subprocess_exec", new=AsyncMock()
+            ) as mock_subprocess,
             patch("spatium.services.deployment.shutil.which", return_value="/usr/bin/containerlab"),
         ):
             # Set up mock process
@@ -140,7 +142,9 @@ class TestContainerLabDeployer:
         """Test listing deployments."""
         # Create deployer with mocked subprocess
         with (
-            patch("spatium.services.deployment.asyncio.create_subprocess_exec", new=AsyncMock()) as mock_subprocess,
+            patch(
+                "spatium.services.deployment.asyncio.create_subprocess_exec", new=AsyncMock()
+            ) as mock_subprocess,
             patch("spatium.services.deployment.shutil.which", return_value="/usr/bin/containerlab"),
         ):
             # Set up mock process
@@ -158,7 +162,7 @@ class TestContainerLabDeployer:
             args = mock_subprocess.call_args[0]
             assert args[0] == "containerlab"
             assert args[1] == "inspect"
-            assert args[2] == "--all"        # Check result
+            assert args[2] == "--all"  # Check result
         assert result["success"] is True
         assert "deployments" in result
         assert "count" in result

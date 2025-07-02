@@ -1,17 +1,14 @@
-"""
-FastAPI dependencies for the Spatium API.
-"""
+"""FastAPI dependencies for the Spatium API."""
+
+from collections.abc import Callable
 from functools import lru_cache
-from typing import Callable
+from typing import Any
 
-from fastapi import Depends
-
-from spatium.core.config import get_settings, Settings
-from spatium.clients.ssh_client import SSHClient
 from spatium.clients.rest_client import RestClient
-from spatium.services.inventory import InventoryService
-from spatium.services.device_config import DeviceConfigService
+from spatium.clients.ssh_client import SSHClient
 from spatium.services.deployment import ContainerLabDeploymentService
+from spatium.services.device_config import DeviceConfigService
+from spatium.services.inventory import InventoryService
 
 
 def get_ssh_client_factory() -> Callable:
@@ -24,21 +21,25 @@ def get_rest_client_factory() -> Callable:
     return RestClient
 
 
-@lru_cache()
+@lru_cache
 def get_inventory_service() -> InventoryService:
     """Get inventory service instance (singleton)."""
     return InventoryService()
 
 
 def get_device_config_service(
-    ssh_client_factory: Callable = Depends(get_ssh_client_factory),
-    rest_client_factory: Callable = Depends(get_rest_client_factory)
+    ssh_client_factory: Callable[..., Any] | None = None,
+    rest_client_factory: Callable[..., Any] | None = None,
 ) -> DeviceConfigService:
     """Get device configuration service instance."""
+    if ssh_client_factory is None:
+        ssh_client_factory = get_ssh_client_factory()
+    if rest_client_factory is None:
+        rest_client_factory = get_rest_client_factory()
     return DeviceConfigService(ssh_client_factory, rest_client_factory)
 
 
-@lru_cache()
+@lru_cache
 def get_deployment_service() -> ContainerLabDeploymentService:
     """Get deployment service instance (singleton)."""
     return ContainerLabDeploymentService()

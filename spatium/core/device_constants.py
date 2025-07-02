@@ -1,6 +1,4 @@
-"""
-Device-specific constants and configurations.
-"""
+"""Device-specific constants and configurations."""
 
 # Device-specific configuration commands
 DEVICE_CONFIG_COMMANDS = {

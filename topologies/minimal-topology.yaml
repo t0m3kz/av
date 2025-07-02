@@ -1,0 +1,12 @@
+---
+name: minimal-topology
+prefix: minimal-topology
+mgmt:
+  network: spatium-mgmt
+  ipv4-subnet: 172.20.0.0/23
+topology:
+  nodes:
+    single-node:
+      kind: linux
+      image: alpine:latest
+  links: []

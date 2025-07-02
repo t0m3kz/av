@@ -1,3 +1,4 @@
+---
 site_name: Spatium Documentation
 site_description: Network Configuration Analyzer and Digital Twin Platform
 site_author: Spatium Team
@@ -56,13 +57,13 @@ plugins:
 
 nav:
   - Home: index.md
-  - Getting Started: 
-    - Installation: getting-started/installation.md
-    - Quick Start: getting-started/quick-start.md
-    - Configuration: getting-started/configuration.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quick-start.md
+      - Configuration: getting-started/configuration.md
   - User Guide:
-    - Overview: user-guide/overview.md
-    - Device Configuration: user-guide/device-config.md
-    - Configuration Analysis: user-guide/config-analysis.md
-    - Digital Twins: user-guide/digital-twins.md
+      - Overview: user-guide/overview.md
+      - Device Configuration: user-guide/device-config.md
+      - Configuration Analysis: user-guide/config-analysis.md
+      - Digital Twins: user-guide/digital-twins.md
   - API Usage: usage.md

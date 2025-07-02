@@ -23,15 +23,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-      
+
       - name: Install dependencies
         run: |
           pip install requests python-dateutil
-      
+
       - name: Generate dashboard data
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -42,26 +42,26 @@ jobs:
           import os
           from datetime import datetime, timedelta
           from dateutil import parser
-          
+
           # GitHub API setup
           repo = os.environ.get('GITHUB_REPOSITORY')
           token = os.environ.get('GITHUB_TOKEN')
           headers = {'Authorization': f'token {token}', 'Accept': 'application/vnd.github.v3+json'}
-          
+
           def get_workflow_runs(workflow_name, limit=10):
               url = f"https://api.github.com/repos/{repo}/actions/workflows"
               response = requests.get(url, headers=headers)
               workflows = response.json()['workflows']
-              
+
               workflow = next((w for w in workflows if w['name'] == workflow_name), None)
               if not workflow:
                   return []
-              
+
               url = f"https://api.github.com/repos/{repo}/actions/workflows/{workflow['id']}/runs"
               params = {'per_page': limit}
               response = requests.get(url, headers=headers, params=params)
               return response.json()['workflow_runs']
-          
+
           def get_latest_release():
               url = f"https://api.github.com/repos/{repo}/releases/latest"
               try:
@@ -71,28 +71,28 @@ jobs:
               except:
                   pass
               return None
-          
+
           def get_open_issues():
               url = f"https://api.github.com/repos/{repo}/issues"
               params = {'state': 'open', 'per_page': 100}
               response = requests.get(url, headers=headers, params=params)
               issues = response.json()
-              
+
               bugs = [i for i in issues if 'bug' in [l['name'] for l in i.get('labels', [])]]
               enhancements = [i for i in issues if 'enhancement' in [l['name'] for l in i.get('labels', [])]]
-              
+
               return {
                   'total': len(issues),
                   'bugs': len(bugs),
                   'enhancements': len(enhancements)
               }
-          
+
           def calculate_success_rate(runs):
               if not runs:
                   return 0
               successful = len([r for r in runs if r['conclusion'] == 'success'])
               return round((successful / len(runs)) * 100, 1)
-          
+
           # Collect data
           dashboard_data = {
               'updated_at': datetime.utcnow().isoformat() + 'Z',
@@ -101,7 +101,7 @@ jobs:
               'issues': get_open_issues(),
               'metrics': {}
           }
-          
+
           # Get workflow data
           workflows = ['CI', 'Release', 'Nightly Build', 'Code Quality Gate']
           for workflow in workflows:
@@ -111,38 +111,38 @@ jobs:
                   'success_rate': calculate_success_rate(runs[:10]),
                   'recent_runs': runs[:5]
               }
-          
+
           # Calculate overall health score
           success_rates = [data['success_rate'] for data in dashboard_data['workflows'].values()]
           overall_health = round(sum(success_rates) / len(success_rates), 1) if success_rates else 0
-          
+
           dashboard_data['metrics'] = {
               'overall_health': overall_health,
               'last_successful_build': None,
               'last_release_days_ago': None
           }
-          
+
           # Find last successful CI run
           ci_runs = dashboard_data['workflows'].get('CI', {}).get('recent_runs', [])
           successful_ci = next((r for r in ci_runs if r['conclusion'] == 'success'), None)
           if successful_ci:
               dashboard_data['metrics']['last_successful_build'] = successful_ci['created_at']
-          
+
           # Calculate days since last release
           if dashboard_data['release']:
               release_date = parser.parse(dashboard_data['release']['published_at'])
               days_ago = (datetime.now(release_date.tzinfo) - release_date).days
               dashboard_data['metrics']['last_release_days_ago'] = days_ago
-          
+
           # Save data
           with open('dashboard-data.json', 'w') as f:
               json.dump(dashboard_data, f, indent=2)
-          
+
           print("Dashboard data generated successfully")
           EOF
-          
+
           python generate_dashboard.py
-      
+
       - name: Generate dashboard HTML
         run: |
           cat > dashboard.html << 'EOF'
@@ -184,17 +184,17 @@ jobs:
                       <h1>🌟 Spatium Project Dashboard</h1>
                       <p>Network Automation Platform - Real-time Status</p>
                   </div>
-                  
+
                   <div id="dashboard-content">
                       <!-- Content will be populated by JavaScript -->
                   </div>
-                  
+
                   <div class="footer">
                       <p>Last updated: <span id="last-updated"></span></p>
                       <p>Auto-refreshes every hour | <a href="https://github.com/spatium-project/spatium">View on GitHub</a></p>
                   </div>
               </div>
-              
+
               <script>
                   async function loadDashboard() {
                       try {
@@ -206,16 +206,16 @@ jobs:
                           document.getElementById('dashboard-content').innerHTML = '<p>Failed to load dashboard data</p>';
                       }
                   }
-                  
+
                   function renderDashboard(data) {
                       const content = document.getElementById('dashboard-content');
                       const lastUpdated = document.getElementById('last-updated');
-                      
+
                       lastUpdated.textContent = new Date(data.updated_at).toLocaleString();
-                      
-                      const healthClass = data.metrics.overall_health >= 90 ? 'excellent' : 
+
+                      const healthClass = data.metrics.overall_health >= 90 ? 'excellent' :
                                          data.metrics.overall_health >= 70 ? 'good' : 'poor';
-                      
+
                       content.innerHTML = `
                           <div class="grid">
                               <div class="card">
@@ -223,7 +223,7 @@ jobs:
                                   <div class="health-score ${healthClass}">${data.metrics.overall_health}%</div>
                                   <div class="metric">
                                       <span>Last Successful Build</span>
-                                      <span class="metric-value">${data.metrics.last_successful_build ? 
+                                      <span class="metric-value">${data.metrics.last_successful_build ?
                                           new Date(data.metrics.last_successful_build).toLocaleDateString() : 'Unknown'}</span>
                                   </div>
                                   <div class="metric">
@@ -231,7 +231,7 @@ jobs:
                                       <span class="metric-value">${data.metrics.last_release_days_ago || 'N/A'}</span>
                                   </div>
                               </div>
-                              
+
                               <div class="card">
                                   <h3>🔧 Workflows</h3>
                                   <ul class="workflow-list">
@@ -248,7 +248,7 @@ jobs:
                                       `).join('')}
                                   </ul>
                               </div>
-                              
+
                               <div class="card">
                                   <h3>🐛 Issues</h3>
                                   <div class="metric">
@@ -264,7 +264,7 @@ jobs:
                                       <span class="metric-value">${data.issues.enhancements}</span>
                                   </div>
                               </div>
-                              
+
                               <div class="card">
                                   <h3>🚀 Latest Release</h3>
                                   ${data.release ? `
@@ -285,17 +285,17 @@ jobs:
                           </div>
                       `;
                   }
-                  
+
                   // Load dashboard on page load
                   loadDashboard();
-                  
+
                   // Auto-refresh every 5 minutes
                   setInterval(loadDashboard, 300000);
               </script>
           </body>
           </html>
           EOF
-      
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

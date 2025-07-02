@@ -1,48 +1,52 @@
-"""
-Custom exceptions for the Spatium API.
-"""
+"""Custom exceptions for the Spatium API."""
+
+from typing import Any
+
 from fastapi import HTTPException
-from typing import Any, Dict, Optional
 
 
-class SpatiumException(Exception):
+class SpatiumError(Exception):
     """Base exception for Spatium API."""
-    
-    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+
+    def __init__(self, message: str, details: dict[str, Any] | None = None):
+        """Initialize SpatiumError with message and optional details."""
         self.message = message
         self.details = details or {}
         super().__init__(self.message)
 
 
-class DeviceNotFoundError(SpatiumException):
+class DeviceNotFoundError(SpatiumError):
     """Raised when a device is not found in inventory."""
+
     pass
 
 
-class DeviceConnectionError(SpatiumException):
+class DeviceConnectionError(SpatiumError):
     """Raised when connection to device fails."""
+
     pass
 
 
-class InventoryError(SpatiumException):
+class InventoryError(SpatiumError):
     """Raised when inventory operations fail."""
+
     pass
 
 
-class ConfigurationError(SpatiumException):
+class ConfigurationError(SpatiumError):
     """Raised when configuration retrieval fails."""
+
     pass
 
 
-class DeploymentError(SpatiumException):
+class DeploymentError(SpatiumError):
     """Raised when deployment operations fail."""
+
     pass
 
 
 def create_http_exception(
-    status_code: int,
-    message: str,
-    details: Optional[Dict[str, Any]] = None
+    status_code: int, message: str, details: dict[str, Any] | None = None
 ) -> HTTPException:
     """Create a standardized HTTP exception."""
     detail = {"message": message}

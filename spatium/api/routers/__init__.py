@@ -1,3 +1,1 @@
-"""
-API routers for Spatium.
-"""
+"""API routers for Spatium."""

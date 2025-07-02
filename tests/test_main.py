@@ -1,8 +1,10 @@
-import pytest
+from unittest.mock import MagicMock, patch
+
 from fastapi.testclient import TestClient
+import pytest
+
 from spatium.main import app
 from spatium.services.inventory import InventoryService
-from unittest.mock import patch, MagicMock
 
 
 @pytest.fixture(autouse=True)
@@ -46,9 +48,9 @@ def test_home_route(client):
     assert isinstance(data, dict), "Response is not a dictionary"
 
     # Check for name or message
-    assert any(key in data for key in ["name", "message"]), (
-        "Response missing 'name' or 'message' field"
-    )
+    assert any(
+        key in data for key in ["name", "message"]
+    ), "Response missing 'name' or 'message' field"
 
     # Check for version or other fields if present
     if "version" in data:
@@ -85,11 +87,13 @@ def test_bulk_add_devices(client):
         }
         for i in range(1, 4)
     ]
-    resp = client.post("/topology/inventory/add", params={"inventory": "testtopo_main"}, json=devices)
+    resp = client.post(
+        "/topology/inventory/add", params={"inventory": "testtopo_main"}, json=devices
+    )
     assert resp.status_code == 200
-    assert resp.json()["success"] == True
+    assert resp.json()["success"]
     assert len(resp.json()["affected_hosts"]) == 3
-    
+
     resp = client.get("/topology/inventory/list", params={"inventory": "testtopo_main"})
     hosts = [d["host"] for d in resp.json()]
     for i in range(1, 4):
@@ -108,18 +112,20 @@ def test_deploy_containerlab_topology(client, mock_clab_api):
         }
         for i in range(1, 4)
     ]
-    resp = client.post("/topology/inventory/add", params={"inventory": "testtopo_deploy"}, json=devices)
+    resp = client.post(
+        "/topology/inventory/add", params={"inventory": "testtopo_deploy"}, json=devices
+    )
     assert resp.status_code == 200
-    
+
     # Deploy topology with links in {a, b} format
     links = [
         {"a": "10.0.0.1:eth1", "b": "10.0.0.2:eth1"},
         {"a": "10.0.0.2:eth2", "b": "10.0.0.3:eth1"},
     ]
     resp = client.post(
-        "/devices/inventory/deploy-containerlab", 
+        "/devices/inventory/deploy-containerlab",
         params={"inventory": "testtopo_deploy"},
-        json={"links": links}
+        json={"links": links},
     )
     assert resp.status_code in (200, 201)
     data = resp.json()
@@ -127,28 +133,28 @@ def test_deploy_containerlab_topology(client, mock_clab_api):
     assert data["success"] is True
     assert data["topology_name"] == "spatium-inventory-topo"
     assert data["error"] is None
-    
+
     # Check that the topology sent to clab-api-server has the correct structure
     called_args, called_kwargs = mock_clab_api.call_args
     sent_topology = called_kwargs["json"]
     assert "topology" in sent_topology
     assert "nodes" in sent_topology["topology"]
     assert "links" in sent_topology["topology"]
-    
+
     # Each link should be a dict with 'endpoints' key
     for link in sent_topology["topology"]["links"]:
         assert "endpoints" in link
         assert isinstance(link["endpoints"], list)
-    
+
     # Deploy topology with links in {endpoints: [...]} format
     links2 = [
         {"endpoints": ["10.0.0.1:eth3", "10.0.0.2:eth4"]},
         {"endpoints": ["10.0.0.2:eth5", "10.0.0.3:eth6"]},
     ]
     resp2 = client.post(
-        "/devices/inventory/deploy-containerlab", 
+        "/devices/inventory/deploy-containerlab",
         params={"inventory": "testtopo_deploy"},
-        json={"links": links2}
+        json={"links": links2},
     )
     assert resp2.status_code in (200, 201)
     data2 = resp2.json()

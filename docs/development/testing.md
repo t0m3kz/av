@@ -70,10 +70,10 @@ def test_analyze_config_with_batfish():
     # Mock dependencies
     with patch("src.analysis.batfish_analyzer.bf_set_network") as mock_set_network:
         # Set up mocks
-        
+
         # Call the function
         result = analyze_config_with_batfish("config data")
-        
+
         # Assert expectations
         assert "interfaces" in result
 ```
@@ -92,10 +92,10 @@ def test_get_device_config(client, mock_ssh_client):
         "password": "password",
         "method": "ssh"
     }
-    
+
     # Make request
     response = client.post("/device/config", json=data)
-    
+
     # Check response
     assert response.status_code == 200
     response_data = response.json()
@@ -117,7 +117,7 @@ async def test_get_config_success():
     # Mock asyncssh
     with patch("asyncssh.connect") as mock_connect:
         # Setup mock
-        
+
         # Call async function
         client = SonicSSHClient()
         result = await client.get_config(
@@ -125,7 +125,7 @@ async def test_get_config_success():
             username="admin",
             password="password"
         )
-        
+
         # Assert expectations
 ```
 
@@ -156,12 +156,12 @@ Use `unittest.mock` for mocking dependencies:
 # Mocking a function
 with patch("module.function") as mock_function:
     mock_function.return_value = "expected result"
-    
+
 # Mocking a class
 with patch("module.Class") as MockClass:
     instance = MockClass.return_value
     instance.method.return_value = "expected result"
-    
+
 # Mocking async functions
 with patch("module.async_function") as mock_async:
     mock_async.return_value = AsyncMock(return_value="expected result")
@@ -201,7 +201,7 @@ curl --noproxy localhost -X POST "http://localhost:8000/topology/inventory/add?i
   -d '[
     {
       "host": "172.20.0.61",
-      "username": "admin", 
+      "username": "admin",
       "password": "admin",
       "port": 22,
       "device_model": "sonic"
@@ -209,7 +209,7 @@ curl --noproxy localhost -X POST "http://localhost:8000/topology/inventory/add?i
     {
       "host": "172.20.0.62",
       "username": "admin",
-      "password": "admin", 
+      "password": "admin",
       "port": 22,
       "device_model": "sonic"
     },
@@ -217,7 +217,7 @@ curl --noproxy localhost -X POST "http://localhost:8000/topology/inventory/add?i
       "host": "172.20.0.65",
       "username": "admin",
       "password": "admin",
-      "port": 22, 
+      "port": 22,
       "device_model": "sonic"
     },
     {
@@ -228,7 +228,7 @@ curl --noproxy localhost -X POST "http://localhost:8000/topology/inventory/add?i
       "device_model": "sonic"
     },
     {
-      "host": "172.20.0.67", 
+      "host": "172.20.0.67",
       "username": "admin",
       "password": "admin",
       "port": 22,
@@ -236,7 +236,7 @@ curl --noproxy localhost -X POST "http://localhost:8000/topology/inventory/add?i
     },
     {
       "host": "172.20.0.68",
-      "username": "admin", 
+      "username": "admin",
       "password": "admin",
       "port": 22,
       "device_model": "sonic"
@@ -249,10 +249,10 @@ curl --noproxy localhost -X POST "http://localhost:8000/topology/inventory/add?i
 {
   "success": true,
   "message": "Successfully added 6 device(s) to inventory",
-  "inventory": "lab1", 
+  "inventory": "lab1",
   "affected_hosts": [
     "172.20.0.61",
-    "172.20.0.62", 
+    "172.20.0.62",
     "172.20.0.65",
     "172.20.0.66",
     "172.20.0.67",
@@ -269,7 +269,7 @@ curl --noproxy localhost -X POST "http://localhost:8000/topology/inventory/add?i
   -d '{
     "host": "172.20.0.61",
     "username": "admin",
-    "password": "admin", 
+    "password": "admin",
     "port": 22,
     "device_model": "sonic"
   }'
@@ -325,7 +325,7 @@ curl --noproxy localhost -X POST "http://localhost:8000/configs/get?inventory=la
       "timestamp": "2025-07-01T10:30:00Z"
     },
     "172.20.0.62": {
-      "status": "success", 
+      "status": "success",
       "config": "!\n! Configuration for device 172.20.0.62\n! Device: sonic\n...",
       "timestamp": "2025-07-01T10:30:15Z"
     },
@@ -381,7 +381,7 @@ curl --noproxy localhost -X POST "http://localhost:8000/configs/save?inventory=l
     },
     "172.20.0.62": {
       "status": "saved",
-      "filename": "172.20.0.62_sonic_config.txt", 
+      "filename": "172.20.0.62_sonic_config.txt",
       "path": "./configs/lab1/172.20.0.62_sonic_config.txt",
       "size_bytes": 15380
     },
@@ -565,7 +565,7 @@ curl --noproxy localhost -X POST "http://localhost:8000/configs/save?inventory=l
 curl --noproxy localhost -X POST "http://localhost:8000/configs/save?inventory=lab1" \
   -H "Content-Type: application/json" \
   -d '{
-    "subdirectory": "current_$(date +%Y%m%d_%H%M%S)", 
+    "subdirectory": "current_$(date +%Y%m%d_%H%M%S)",
     "create_subdirectory": true
   }'
 ```

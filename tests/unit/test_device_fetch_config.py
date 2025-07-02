@@ -1,15 +1,20 @@
 import pytest
-from spatium.services.device_config import DeviceConfigService
+
 from spatium.models.device import DeviceConfigRequest
+from spatium.services.device_config import DeviceConfigService
+
 
 class DummySSHClient:
     def __init__(self, **kwargs):
         self.host = kwargs["host"]
+
     async def get_config(self, command="show running-config"):
         return {"host": self.host, "running_config": "dummy config", "error": None}
 
+
 def dummy_factory(**kwargs):
     return DummySSHClient(**kwargs)
+
 
 @pytest.mark.asyncio
 async def test_fetch_config_success():
@@ -22,15 +27,19 @@ async def test_fetch_config_success():
     assert result.running_config == "dummy config"
     assert result.error is None
 
+
 @pytest.mark.asyncio
 async def test_fetch_config_error():
     class ErrorClient:
         def __init__(self, **kwargs):
             self.host = kwargs["host"]
+
         async def get_config(self, command="show running-config"):
             raise Exception("fail connect")
+
     def error_factory(**kwargs):
         return ErrorClient(**kwargs)
+
     req = DeviceConfigRequest(
         host="2.2.2.2", username="u", password="p", port=22, device_model="arista"
     )

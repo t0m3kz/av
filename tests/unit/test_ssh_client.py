@@ -1,9 +1,10 @@
-import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
-from spatium.clients.ssh_client import SSHClient
 import json
 import pathlib
-import glob
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+from spatium.clients.ssh_client import SSHClient
 
 MOCKS_DIR = pathlib.Path(__file__).parent.parent / "mocks"
 
@@ -14,6 +15,7 @@ class TestSSHClient:
         class MockRunResult:
             def __init__(self, stdout):
                 self.stdout = stdout
+
         mock_conn = MagicMock()
         mock_conn.run = AsyncMock()
         mock_conn.run.side_effect = [
@@ -25,11 +27,7 @@ class TestSSHClient:
         mock_connect.return_value.__aenter__.return_value = mock_conn
         mock_connect.return_value.__aexit__.return_value = None
         with patch("spatium.clients.ssh_client.asyncssh.connect", mock_connect):
-            client = SSHClient(
-                host="192.168.1.1",
-                username="admin",
-                password="password"
-            )
+            client = SSHClient(host="192.168.1.1", username="admin", password="password")
             result = await client.get_config()
             assert isinstance(result, dict)
             assert result["source"] == "ssh"
@@ -47,11 +45,7 @@ class TestSSHClient:
         mock_connect.return_value.__aenter__.return_value = mock_conn
         mock_connect.return_value.__aexit__.return_value = None
         with patch("spatium.clients.ssh_client.asyncssh.connect", mock_connect):
-            client = SSHClient(
-                host="192.168.1.1",
-                username="admin",
-                private_key="/path/to/key"
-            )
+            client = SSHClient(host="192.168.1.1", username="admin", private_key="/path/to/key")
             result = await client.get_config()
             assert result["source"] == "ssh"
 
@@ -61,18 +55,14 @@ class TestSSHClient:
         mock_connect.return_value.__aenter__.side_effect = Exception("Connection failed")
         mock_connect.return_value.__aexit__.return_value = None
         with patch("spatium.clients.ssh_client.asyncssh.connect", mock_connect):
-            client = SSHClient(
-                host="192.168.1.1",
-                username="admin",
-                password="password"
-            )
+            client = SSHClient(host="192.168.1.1", username="admin", password="password")
             result = await client.get_config()
             assert "error" in result
             assert result["source"] == "ssh"
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "password,private_key,expect_success",
+        ("password", "private_key", "expect_success"),
         [
             ("password", None, True),
             (None, "/path/to/key", False),
@@ -80,10 +70,13 @@ class TestSSHClient:
             (None, None, False),
         ],
     )
-    async def test_get_config_various_auth(self, password, private_key, expect_success, monkeypatch):
+    async def test_get_config_various_auth(
+        self, password, private_key, expect_success, monkeypatch
+    ):
         class MockRunResult:
             def __init__(self, stdout):
                 self.stdout = stdout
+
         if expect_success:
             mock_conn = AsyncMock()
             mock_conn.run = AsyncMock()
@@ -122,6 +115,7 @@ class TestSSHClient:
         class MockRunResult:
             def __init__(self, stdout):
                 self.stdout = stdout
+
         mock_conn = MagicMock()
         mock_conn.run = AsyncMock()
         mock_conn.run.side_effect = [
@@ -133,11 +127,7 @@ class TestSSHClient:
         mock_connect.return_value.__aenter__.return_value = mock_conn
         mock_connect.return_value.__aexit__.return_value = None
         with patch("spatium.clients.ssh_client.asyncssh.connect", mock_connect):
-            client = SSHClient(
-                host="1.2.3.4",
-                username="admin",
-                password="pw"
-            )
+            client = SSHClient(host="1.2.3.4", username="admin", password="pw")
             result = await client.get_config()
             assert "error" in result
             assert result["source"] == "ssh"
@@ -149,10 +139,11 @@ class TestSSHClient:
             SSHClient()
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("mock_file", glob.glob(str(MOCKS_DIR / "ssh_output_*.json")))
+    @pytest.mark.parametrize("mock_file", list(MOCKS_DIR.glob("ssh_output_*.json")))
     async def test_get_config_with_various_outputs(self, mock_file, monkeypatch):
-        with open(mock_file) as f:
+        with pathlib.Path(mock_file).open() as f:
             sample = json.load(f)
+
         # Patch SSHClient.get_config to directly return the sample for this test
         async def dummy_get_config(self, command="show runningconfiguration all"):
             return {
@@ -163,25 +154,12 @@ class TestSSHClient:
                 "source": "ssh",
                 "error": sample.get("error"),
             }
+
         monkeypatch.setattr(SSHClient, "get_config", dummy_get_config)
-        client = SSHClient(
-            host="10.0.0.1",
-            username="admin",
-            password="pw"
-        )
+        client = SSHClient(host="10.0.0.1", username="admin", password="pw")
         result = await client.get_config()
         assert result["running_config"] == sample.get("running_config")
         assert result.get("version_info") == sample.get("version_info")
         assert result.get("interfaces") == sample.get("interfaces")
         assert result["source"] == "ssh"
         assert "error" in result
-
-def test_get_config_with_various_outputs(monkeypatch):
-    # Patch the SSH call to return the expected output
-    def dummy_get_config(self, command="show runningconfiguration all"):
-        return {
-            "host": "10.0.0.1",
-            "running_config": "interface Ethernet0\n  mtu 9100\n  no shutdown\n!\ninterface Ethernet1\n  mtu 9100\n  no shutdown\n!",
-            "error": None,
-        }
-    monkeypatch.setattr("spatium.clients.ssh_client.SSHClient.get_config", dummy_get_config)

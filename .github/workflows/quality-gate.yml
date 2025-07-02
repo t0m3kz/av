@@ -20,78 +20,78 @@ jobs:
       coverage-percentage: ${{ steps.coverage.outputs.percentage }}
       security-issues: ${{ steps.security.outputs.issues }}
       complexity-score: ${{ steps.complexity.outputs.score }}
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install uv
           uv venv
           uv sync
-      
+
       - name: Code complexity analysis
         id: complexity
         run: |
           echo "::group::Analyzing code complexity"
           uv add --dev radon xenon
-          
+
           # Calculate cyclomatic complexity
           COMPLEXITY=$(uv run radon cc spatium/ -a -nc | tail -1 | grep -o '[0-9.]*' | head -1)
           echo "Average complexity: $COMPLEXITY"
           echo "score=$COMPLEXITY" >> $GITHUB_OUTPUT
-          
+
           # Check for complex functions
           uv run xenon --max-absolute C --max-modules A --max-average A spatium/ || true
           echo "::endgroup::"
-      
+
       - name: Test coverage analysis
         id: coverage
         run: |
           echo "::group::Running tests with coverage"
           uv run pytest tests/ --cov=spatium --cov-report=xml --cov-report=term-missing
-          
+
           # Extract coverage percentage
           COVERAGE=$(grep -o 'total.*%' coverage.xml | grep -o '[0-9]*%' | head -1 | tr -d '%')
           echo "Coverage: $COVERAGE%"
           echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
           echo "::endgroup::"
-      
+
       - name: Security analysis
         id: security
         run: |
           echo "::group::Security analysis"
           uv add --dev bandit safety
-          
+
           # Run bandit for security issues
           BANDIT_ISSUES=$(uv run bandit -r spatium/ -f json | jq '.results | length' || echo "0")
           echo "Security issues found: $BANDIT_ISSUES"
           echo "issues=$BANDIT_ISSUES" >> $GITHUB_OUTPUT
-          
+
           # Check dependencies
           uv run safety check || true
           echo "::endgroup::"
-      
+
       - name: Code quality metrics
         run: |
           echo "::group::Code quality metrics"
           uv add --dev flake8
-          
+
           # Count total lines of code
           TOTAL_LINES=$(find spatium/ -name "*.py" -exec wc -l {} + | tail -1 | awk '{print $1}')
           echo "Total lines of code: $TOTAL_LINES"
-          
+
           # Count test lines
           TEST_LINES=$(find tests/ -name "*.py" -exec wc -l {} + | tail -1 | awk '{print $1}')
           echo "Test lines of code: $TEST_LINES"
-          
+
           # Test to code ratio
           if [ $TOTAL_LINES -gt 0 ]; then
             RATIO=$(echo "scale=2; $TEST_LINES / $TOTAL_LINES" | bc)
@@ -107,19 +107,19 @@ jobs:
       - name: Evaluate quality gate
         run: |
           echo "::group::Quality Gate Evaluation"
-          
+
           COVERAGE=${{ needs.quality-checks.outputs.coverage-percentage }}
           SECURITY_ISSUES=${{ needs.quality-checks.outputs.security-issues }}
           COMPLEXITY=${{ needs.quality-checks.outputs.complexity-score }}
-          
+
           echo "📊 Quality Metrics:"
           echo "  Coverage: ${COVERAGE}%"
           echo "  Security Issues: $SECURITY_ISSUES"
           echo "  Complexity Score: $COMPLEXITY"
-          
+
           # Quality gate rules
           PASS=true
-          
+
           # Check coverage threshold
           if [ "$COVERAGE" -lt 80 ]; then
             echo "❌ Coverage below threshold (80%): ${COVERAGE}%"
@@ -127,7 +127,7 @@ jobs:
           else
             echo "✅ Coverage meets threshold: ${COVERAGE}%"
           fi
-          
+
           # Check security issues
           if [ "$SECURITY_ISSUES" -gt 0 ]; then
             echo "❌ Security issues found: $SECURITY_ISSUES"
@@ -135,7 +135,7 @@ jobs:
           else
             echo "✅ No security issues found"
           fi
-          
+
           # Check complexity
           if [ "$(echo "$COMPLEXITY > 10" | bc)" = "1" ]; then
             echo "❌ Code complexity too high: $COMPLEXITY"
@@ -143,7 +143,7 @@ jobs:
           else
             echo "✅ Code complexity acceptable: $COMPLEXITY"
           fi
-          
+
           if [ "$PASS" = "true" ]; then
             echo "🎉 Quality gate PASSED!"
             exit 0
@@ -152,7 +152,7 @@ jobs:
             exit 1
           fi
           echo "::endgroup::"
-      
+
       - name: Update PR status
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -161,36 +161,36 @@ jobs:
             const coverage = '${{ needs.quality-checks.outputs.coverage-percentage }}';
             const securityIssues = '${{ needs.quality-checks.outputs.security-issues }}';
             const complexity = '${{ needs.quality-checks.outputs.complexity-score }}';
-            
+
             const body = `## 📊 Quality Gate Report
-            
+
             | Metric | Value | Status |
             |--------|-------|--------|
             | Coverage | ${coverage}% | ${coverage >= 80 ? '✅' : '❌'} |
             | Security Issues | ${securityIssues} | ${securityIssues == 0 ? '✅' : '❌'} |
             | Complexity | ${complexity} | ${complexity <= 10 ? '✅' : '❌'} |
-            
+
             ### Quality Standards
             - **Coverage**: Minimum 80% required
             - **Security**: Zero issues allowed
             - **Complexity**: Maximum 10.0 average
-            
-            ${coverage >= 80 && securityIssues == 0 && complexity <= 10 ? 
-              '🎉 **Quality gate PASSED!** All metrics meet the required standards.' : 
+
+            ${coverage >= 80 && securityIssues == 0 && complexity <= 10 ?
+              '🎉 **Quality gate PASSED!** All metrics meet the required standards.' :
               '🚫 **Quality gate FAILED!** Please address the issues above before merging.'}
             `;
-            
+
             // Find existing quality gate comment
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number
             });
-            
-            const existingComment = comments.data.find(comment => 
+
+            const existingComment = comments.data.find(comment =>
               comment.body.includes('📊 Quality Gate Report')
             );
-            
+
             if (existingComment) {
               // Update existing comment
               await github.rest.issues.updateComment({

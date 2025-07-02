@@ -39,7 +39,7 @@ Spatium executes these commands on SONiC devices:
 
 ## Device Model Selection
 
-You can specify the `device_model` parameter to tell Spatium which command to use for retrieving the configuration.  
+You can specify the `device_model` parameter to tell Spatium which command to use for retrieving the configuration.
 Supported values include: `sonic`, `cisco`, `arista`, `juniper`, `huawei`, `linux`, and more.
 
 ### Example Request with Device Model

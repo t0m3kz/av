@@ -1,3 +1,1 @@
-"""
-Service layer for Spatium.
-"""
+"""Service layer for Spatium."""
