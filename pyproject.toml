@@ -62,7 +62,8 @@ dev = [
     "mypy>=1.7.0",
     "types-PyYAML>=6.0.12",
     "bandit>=1.7.5",
-    "safety>=2.3.0"
+    "safety>=2.3.0",
+    "yamllint>=1.37.1",
 ]
 
 # pytest configuration
